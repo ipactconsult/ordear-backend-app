@@ -4,13 +4,18 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require ('cors');
 const userRoute=require('./routes/UserRoutes/UserRouter');
-
+const cookieSession = require("cookie-session");
+const passport = require("passport");
+const passportSetup=require('./passport')
 //import readFileSync from 'fs';
 const fs = require('fs');
 
 const path = require('path')
 require('dotenv').config()
 const app = express();
+app.use(
+  cookieSession({ name: "session", keys: ["lama"], maxAge: 24 * 60 * 60 * 100 })
+);
 
 mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGO_URL,{
@@ -21,6 +26,13 @@ mongoose.connect(process.env.MONGO_URL,{
   console.log("MongoDB connection established");
 });
 
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true,
+  })
+);
 app.use(function (req, res, next) {
 
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
@@ -44,10 +56,7 @@ app.use(bodyParser.urlencoded({
 }));
 
 app
-  .use(express.static(path.join(__dirname, 'public')))
-  .set('views', path.join(__dirname, 'views'))
-  .set('view engine', 'ejs')
-  .get('/', (req, res) => res.render('pages/index'))
+  
   .listen(PORT, () => console.log(`Listening on ${ PORT }`));
 
 app.use("/api",userRoute);

@@ -42,6 +42,8 @@ const UserController = {
   updateImage_controller : async(req,res)=> {
     userService.updateImage(req,res);
   }
+
+
 };
 
 module.exports = UserController;
