@@ -15,7 +15,7 @@ const userSchema = new Schema({
   lastName: String,
   profilePhoto: String,
   password: String,
-  source: { type: String, required: [true, "source not specified"] },
+  source: { type: String, required: [false, "source not specified"] },
   lastVisited: { type: Date, default: new Date() }
 });
 

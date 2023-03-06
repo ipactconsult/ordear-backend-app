@@ -17,10 +17,12 @@ passport.use(
       clientID: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
       callbackURL: "/api/google/callback",
+      scope: [ 'email', 'profile' ]
     },
     async (accessToken, refreshToken, profile, done) => {
+      console.log(profile)
       const id = profile.id;
-      const email =  "test@gmail.com"  ;
+      const email =  profile?.emails[0]?.value    ;
       const firstName = profile.name.givenName;
       const lastName = profile.name.familyName;
       const profilePhoto = profile.photos[0].value;

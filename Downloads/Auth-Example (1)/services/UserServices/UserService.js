@@ -1,8 +1,10 @@
-const User = require("../../models/user");
+const User = require("../../user/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
-//command line to install 
+const RandomString = require("randomstring");
+//npm install random string
+
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
@@ -16,7 +18,7 @@ const transporter = nodemailer.createTransport({
 
 const UserService = {
   register: async (req, res) => {
-    const { name, country, phone, email, password, passwordVerify } = req.body;
+    const { firstName, lastName, email, password, passwordVerify } = req.body;
     User.findOne({ email }).exec((err, user) => {
       if (user) {
         return res.status(400).json({ error: "Email is already taken" });
@@ -27,10 +29,12 @@ const UserService = {
       return res.status(400).json({ error: "Mismatch password" });
     }
     const token = jwt.sign(
-      { name, country, phone, email, password, passwordVerify },
+      { firstName,lastName, email, password, passwordVerify },
       process.env.JWT_ACC_ACTIVATE,
       { expiresIn: "10m" }
     );
+ 
+  
 
     const options = {
       from: "noreply@gmail.com",
@@ -70,11 +74,80 @@ const UserService = {
 
 
 
+  
+
+  registerwithcode: async (req, res) => {
+    const { firstName, lastName, email, password, passwordVerify } = req.body;
+    User.findOne({ email }).exec((err, user) => {
+      if (user) {
+        return res.status(400).json({ error: "Email is already taken" });
+      }
+    });
+
+    if (password !== passwordVerify) {
+      return res.status(400).json({ error: "Mismatch password" });
+    }
+    //generate random string for activation code
+    const activationCode = RandomString.generate({
+      length: 6,
+      charset: "numeric",
+    });
+    const token = jwt.sign(
+      { firstName,lastName, email, password, passwordVerify ,activationCode },
+      process.env.JWT_ACC_ACTIVATE,
+      { expiresIn: "10m" }
+    );
+
+  res.cookie("token", token, { expiresIn: "10m" });
+    
+ 
+    
+ 
+  
+
+    const options = {
+      from: "noreply@gmail.com",
+      to: email,
+      subject: "Account Activation Code",
+      html: `
+           <div style="max-width: 700px; margin:auto; border: 5px solid #ddd; padding: 50px 20px; font-size: 110%;">
+           <h2 style="text-align: center; text-transform: uppercase;color: blue;">Welcome to our website.</h2>
+           <p>Congratulations! 
+               Just click the button below to validate your email address.
+           </p>
+           
+           
+           <a>${activationCode}</a>
+           
+       
+         
+           </div>
+           `,
+    };
+
+    transporter.sendMail(options, function (err, info) {
+      if (err) {
+        console.log("Error in signup while account activation: ", err);
+        return res.status(400).json({ error: "Error activating account" });
+      } else {
+        return res.status(200).json({ message: "An email has been sent" });
+      }
+    });
+  },
+
+
+  
+
+
+  
+  
+
+
 
 
   activationAccount: async (req, res) => {
     const { token } = req.body;
-    if (token) {
+        if (token) {
       jwt.verify(
         token,
         process.env.JWT_ACC_ACTIVATE,
@@ -84,7 +157,7 @@ const UserService = {
               .status(400)
               .json({ error: "Incorrect or Expired link." });
           }
-          const { role, avatar, name, country, phone, email, password } =
+          const {  firstName,lastName,email, password } =
             decodedToken;
           User.findOne({ email }).exec(async (err, user) => {
             if (user) {
@@ -98,10 +171,76 @@ const UserService = {
 
             let newUser = new User({
               role: "user",
-              avatar: "https://image.flaticon.com/icons/png/512/61/61205.png",
-              name,
-              country,
-              phone,
+             
+              firstName,
+             
+            
+              email,
+              password: passwordHash,
+            });
+            newUser.save((err, success) => {
+              if (err) {
+                console.log("Error in signup : ", err);
+                return res.status(400).json({ error: err });
+              } else {
+                return res.status(200).json({
+                  message: "Signup success",
+                });
+              }
+            });
+          });
+        }
+      );
+    } else {
+      return res.json({ error: "Something went wrong." });
+    }
+  },
+  activationAccountwithcode: async (req, res) => {
+    const token = req.cookies.token;
+           
+   
+    
+    if (token) {
+      jwt.verify(
+        token,
+        process.env.JWT_ACC_ACTIVATE,
+        function (err, decodedToken) {
+          if (err) {
+            return res
+              .status(400)
+              .json({ error: "Incorrect or Expired link." });
+          }
+          const {   firstName,lastName, email, password ,activationCode } =
+            decodedToken;
+            console.log(decodedToken);
+            console.log(activationCode);
+          User.findOne({ email }).exec(async (err, user) => {
+            if (user) {
+              return res
+                .status(400)
+                .json({ error: "User with this email already exists." });
+            }
+
+
+            const salt = await bcrypt.genSalt();
+            const passwordHash = await bcrypt.hash(password, salt);
+            console.log(passwordHash);
+
+            const code= req.body.activationCode;
+            if (code !== activationCode) {
+              return res.status(400).json({ error: "Mismatch code" });
+            }
+
+
+         
+
+
+            let newUser = new User({
+              
+             
+              firstName,
+             lastName,
+            
               email,
               password: passwordHash,
             });
@@ -123,6 +262,10 @@ const UserService = {
     }
   },
 
+
+
+
+
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -143,21 +286,22 @@ const UserService = {
         return res.status(400).json({ message: "Invalid credentials" });
       }
       //Using token for login
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      const tokenlog = jwt.sign({ user: user.email}, process.env.JWT_SECRET);
       res.json({
-        token,
+        tokenlog,
         user: {
-          id: user._id,
-          role: user.role,
-          avatar: user.avatar,
-          name: user.name,
-          country: user.country,
-          phone: user.phone,
+          
+          firstName: user.firstName,
+          lastName: user.lastName,
+        
+         
           email: user.email,
-          birthday: user.birthday,
-          bio: user.bio,
+         
+          
         },
       });
+      res.cookie('tokenlog',tokenlog,{maxAge:900000,httpOnly:true}) 
+      
     } catch (err) {
       return res.status(500).json({ message: err.message });
     }

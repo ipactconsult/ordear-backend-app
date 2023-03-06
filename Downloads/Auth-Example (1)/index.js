@@ -7,16 +7,14 @@ const userRoute=require('./routes/UserRoutes/UserRouter');
 const cookieSession = require("cookie-session");
 const passport = require("passport");
 const passportSetup=require('./passport')
-//import readFileSync from 'fs';
+const cookieParser = require("cookie-parser");
+
 const fs = require('fs');
 
 const path = require('path')
 require('dotenv').config()
 const app = express();
-app.use(
-  cookieSession({ name: "session", keys: ["lama"], maxAge: 24 * 60 * 60 * 100 })
-);
-
+app.use(cookieParser());
 mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGO_URL,{
   useNewUrlParser : true,

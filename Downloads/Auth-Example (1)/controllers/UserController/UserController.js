@@ -6,8 +6,18 @@ const UserController = {
     userService.register(req, res);
   },
 
+
+  registercode_controller: async (req, res) => {
+    userService.registerwithcode(req, res);
+  },
+
   validationAccount_controller: async (req, res) => {
     userService.activationAccount(req, res);
+  },
+
+
+  validationAccountwithcode_controller: async (req, res) => {
+    userService.activationAccountwithcode(req, res);
   },
 
   login_controller: async (req, res) => {
