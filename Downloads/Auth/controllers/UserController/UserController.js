@@ -40,7 +40,14 @@ const UserController = {
   modifPass_controller: async (req, res) => {
     userService.resetPasswordWithCode(req, res);
   },
-  // ------------------------------------------------------
+  // ---------------------------------------------------------------------
+
+  // ------------------------ profile -------------------------------------
+  viewProfile_controller: async (req, res) => {
+    userService.viewProfile(req, res);
+  },
+
+
   resetPassword_controller: async (req, res) => {
     userService.resetPassword(req, res);
   },

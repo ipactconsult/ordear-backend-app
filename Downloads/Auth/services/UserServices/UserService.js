@@ -75,7 +75,7 @@ const UserService = {
 
   // ------------ register with code + verification--------------
   registerwithcode: async (req, res) => {
-    const { firstName, lastName, email, password, passwordVerify } = req.body;
+    const { firstName, lastName, phone ="", adresse="", genre="", birthday="", email, password, passwordVerify } = req.body;
     User.findOne({ email }).exec((err, user) => {
       if (user) {
         return res.status(400).json({ error: "Email is already taken" });
@@ -91,7 +91,7 @@ const UserService = {
       charset: "numeric",
     });
     const token = jwt.sign(
-      { firstName,lastName, email, password, passwordVerify ,activationCode },
+      { firstName,lastName, email, password, passwordVerify, phone, genre, adresse, birthday ,activationCode },
       `${process.env.JWT_ACC_ACTIVATE}`,
       { expiresIn: "10m" }
     );
@@ -162,7 +162,11 @@ const UserService = {
             let newUser = new User({          
              
               firstName,
-              lastName,        
+              lastName, 
+              phone:"",
+              adresse: "",
+              birthday:"",
+              genSalt:"",
               email,
               password: passwordHash,
               
@@ -260,20 +264,27 @@ const UserService = {
         return res.status(400).json({ message: "Invalid credentials" });
       }
       //Using token for login
-      const token = jwt.sign({ id: user._id }, `${process.env.JWT_SECRET}`);
+      const tokenLogin = jwt.sign({ id: user._id }, `${process.env.JWT_SECRET}`);
+     
+
+      console.log("**********************")
+     console.log(tokenLogin);
+
+     res.cookie("tokenLogin", tokenLogin);
+
       res.json({
-        token,
+        tokenLogin,
         user: {
           id: user._id,
           //role: user.role,
          // avatar: user.avatar,
           firstName: user.firstName,
           lastName: user.lastName,
-         // country: user.country,
-         // phone: user.phone,
+          adresse: user.adresse,
+          phone: user.phone,
           email: user.email,
-          //birthday: user.birthday,
-         // bio: user.bio,
+          birthday: user.birthday,
+         genre: user.genre,
         },
       });
     } catch (err) {
@@ -428,38 +439,35 @@ const UserService = {
 
             console.log("your forgot token pass " +tokenForgotPass);
             res.cookie("tokenForgotPass", tokenForgotPass, { expiresIn: "10m" }); 
-
-            //const resetTokenPass = tokenForgotPass;
-
-          /*  const tokenLinkPass = jwt.sign(
-              { email},
-              `${process.env.JWT_ACC_ACTIVATE}`,
-              { expiresIn: "10m" }
-            );
-
-                    
-          res.cookie("tokenLinkPass", tokenLinkPass, { expiresIn: "10m" });  
-        */
-           // res.cookie("resetLinkPass", resetTokenPass, { expiresIn: "10m" }); 
-           /* console.log("***************************"); 
-            console.log("New token : email"); 
-            console.log("***************************"); 
-            console.log("");
-            console.log(tokenLinkPass); */
-
             console.log('code verified'); 
-            
-            /*return User.updateOne({resetLinkPass: tokenForgotPass}), function (err, success) {;
-              console.log("");
-              console.log("************");
-              console.log("****reset link: " + resetLinkPass);
-        
-              if(success){
-                res.cookie("resetLinkPass", resetLinkPass, { expiresIn: "10m" });
+
+            const options = {
+              from: "ettouils505@gmail.com",
+              to: email,
+              subject: "Email confirmation",
+              html: `
+                   <div style="max-width: 700px; margin:auto; border: 5px solid #ddd; padding: 50px 20px; font-size: 110%;">
+                   <h2 style="text-align: center; text-transform: uppercase;color: blue;">Welcome to Ordear</h2>
+                   <p>Congratulations! 
+                      Your adress email has been verified.
+                   </p>
+                        
+                 
+                   </div>
+                   `,
+            };
+      
+            transporter.sendMail(options, function (err, info) {
+              if (err) {
+                console.log("Error while account validation: ", err);
+                return res.status(400).json({ error: "Error verifying account" });
+              } else {
+                return res.status(200).json({ message: "An email has been sent" });
               }
-                
-        
-              } */  
+          });
+      
+             
+          
           });
         }
       );
@@ -469,7 +477,6 @@ const UserService = {
   },
 
   resetPasswordWithCode: async (req, res) => {
-
 
       const tokenForgotPass = req.cookies.tokenForgotPass;
 
@@ -488,73 +495,33 @@ const UserService = {
        console.log('Error: ' + err);
    })
 
-    //const linkPass = req.cookies.resetLinkPass;
-   /* const { resetLinkPass, newPass } = req.body;
-
-    if (resetLinkPass) {
-      jwt.verify(
-        resetLinkPass,
-        `${process.env.JWT_ACC_ACTIVATE}`,
-        function (error, decodedData) {
-          if (error) {
-            return res.status(401).json({
-              error: "Incorrect token or It is expired.",
-            });
-          }
-          User.findOne({ resetLinkPass }, async (err, user) => {
-            if (err || !user) {
-              return res
-                .status(400)
-                .json({ error: "User with token does not exists" });
-            }
-
-            const salt = await bcrypt.genSalt();
-            const passwordHash1 = await bcrypt.hash(newPass, salt);
-            console.log(passwordHash1);
-
-            const obj = {
-              password: passwordHash1,
-              resetLinkPass: "",
-            };
-            user = _.extend(user, obj);
-            user.save((err, result) => {
-              if (err) {
-                return res.status(400).json({ error: "reset password error" });
-              } else {
-                return res
-                  .status(200)
-                  .json({ message: "Your password has been changed." });
-              }
-            });
-          });
-        }
-      );
-    } else {
-      return res.status(401).json({ error: "Authentication error." });
-    }*/
+  
   },
 
- 
-/*resetPasswordWithCode :async(req,res)=>{
-
-  const tokenLinkPass = req.cookies.tokenForgotPass; 
-  const newPass  = req.body;
-
-   var salt = bcrypt.genSaltSync(10);
-      User.updateOne(
-       { "email": tokenLinkPass}, // Filter
-       {$set:{"password":  bcrypt.hashSync(req.body.newPass, salt)}} // Update
-   )
-   .then((obj) => {
-       console.log('Updated - ' + obj);
-       res.send(obj)
-   })
-   .catch((err) => {
-       console.log('Error: ' + err);
-   })
-},*/
-
 // -------------------------------------------------------------------------------------------------
+
+/* ****************************** get profile ********************************************** */
+viewProfile: async(req,res)=>{
+
+  const tokenProfile = req.cookies.tokenLogin; 
+    
+    User.find({tokenProfile},(err,docs)=>{
+        if(err)
+        {
+            res.send(err)
+
+        }
+        else {
+            res.send(docs)
+        }
+    })
+
+},
+
+
+/* ***************************************************************************************** */
+
+
 
 updatePWD: async (req, res) =>{
   var salt = bcrypt.genSaltSync(10);
@@ -570,6 +537,7 @@ updatePWD: async (req, res) =>{
    console.log('Error: ' + err);
 })
 },
+
   //Profile Management
 
     //Display User Informations
