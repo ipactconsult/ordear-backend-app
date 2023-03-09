@@ -277,7 +277,6 @@ const UserService = {
       res.cookie("tokenLogin", tokenLogin);
 
       res.json({
-        tokenLogin,
         user: {
           id: user._id,
           //role: user.role,
@@ -524,22 +523,40 @@ const UserService = {
 // -------------------------------------------------------------------------------------------------
 
 /* ****************************** get + edit profile ********************************************** */
-/*viewProfile: async(req,res)=>{
-  const tokenProfile = req.cookies.tokenLogin;
+viewProfile: async(req,res)=>{
+  const tokenViewProfile = req.cookies.tokenLogin;
 
-  res.cookie("tokenProfile", tokenProfile );
+  var decodeTokenLogin = jwt_decode(tokenViewProfile);
+
+  var idUser = decodeTokenLogin.id;
+
+ // const user = await User.findOne({ email: email });
+  const user = await User.findOne({"_id": idUser});
        
-    User.find({tokenProfile},(err,docs)=>{
+  User.find({"_id": idUser},(err,docs)=>{
         if(err)
         {
           res.send(err)
         }
         else {
+          /*res.json({
+            user: {
+              id: user._id,
+             // avatar: user.avatar,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              adresse: user.adresse,
+              phone: user.phone,
+              email: user.email,
+              birthday: user.birthday,
+              genre: user.genre,
+            },
+          });*/
             res.send(docs)
         }
     })
 
-},*/
+},
 
 editProfile : async(req,res)=>{
 
@@ -556,7 +573,7 @@ editProfile : async(req,res)=>{
   User.updateOne(
     //{ "_id": req.params.id}, // Filter
     {"_id": idUser},
-    {$set:{"firstName":req.body.firstName,"lastName":req.body.lastName ,"addresse":req.body.addresse,"birthday":req.body.birthday, "genre": req.body.genre}} // Update
+    {$set:{"firstName":req.body.firstName,"lastName":req.body.lastName ,"phone": req.body.phone,"addresse":req.body.addresse,"birthday":req.body.birthday, "genre": req.body.genre}} // Update
   )
     .then((obj) => {
       console.log('Updated - ' + obj);
