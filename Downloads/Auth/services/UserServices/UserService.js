@@ -1,3 +1,4 @@
+const jwt_decode = require("jwt-decode");
 const User = require("../../models/client");
 const bcrypt = require("bcryptjs");
 const fs = require('fs'); 
@@ -10,6 +11,8 @@ const RandomString = require("randomstring");
 
 const express = require("express");
 const route = express.Router();
+
+
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -268,9 +271,10 @@ const UserService = {
      
 
       console.log("**********************")
-     console.log(tokenLogin);
+      console.log(" Your token is :")
+      console.log(tokenLogin);
 
-     res.cookie("tokenLogin", tokenLogin);
+      res.cookie("tokenLogin", tokenLogin);
 
       res.json({
         tokenLogin,
@@ -287,6 +291,12 @@ const UserService = {
          genre: user.genre,
         },
       });
+
+     /* const tokenLog = jwt.sign(
+        { id, firstName,lastName, adresse, phone, email, birthday, genre },
+        `${process.env.JWT_ACC_ACTIVATE}`,
+        { expiresIn: "10m" }
+      );*/
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: err.message });
@@ -408,7 +418,15 @@ const UserService = {
    },
 
   verifCodeForgotPassword: async (req, res) => {
-    const tokenForgotPass = req.cookies.tokenForgotPass;   
+    const tokenForgotPass = req.cookies.tokenForgotPass; 
+    
+    var decodeTokenLogin = jwt_decode(tokenForgotPass);
+
+    var emailUser = decodeTokenLogin.email;
+    var codeVerif = decodeTokenLogin.activationCodeForgotPass;
+
+    console.log("your email is : " +emailUser);
+    console.log("your code is :"+codeVerif);
    
     if (tokenForgotPass) {
       jwt.verify(
@@ -438,7 +456,7 @@ const UserService = {
             }
 
             console.log("your forgot token pass " +tokenForgotPass);
-            res.cookie("tokenForgotPass", tokenForgotPass, { expiresIn: "10m" }); 
+            res.cookie("tokenForgotPass", tokenForgotPass ); //{ expiresIn: "10m" }
             console.log('code verified'); 
 
             const options = {
@@ -480,11 +498,16 @@ const UserService = {
 
       const tokenForgotPass = req.cookies.tokenForgotPass;
 
+      var decodeTokenLogin = jwt_decode(tokenForgotPass);
+
+      var emailUser = decodeTokenLogin.email;
+      var codeVerif = decodeTokenLogin.activationCodeForgotPass;
+
       const { resetLinkPass, newPass } = req.body;
       
       var salt = bcrypt.genSaltSync(10);
       User.updateOne(
-       {tokenForgotPass}, // Filter
+       {"email": emailUser}, // Filter
        {$set:{"password":  bcrypt.hashSync(req.body.password, salt)}} // Update
    )
    .then((obj) => {
@@ -500,23 +523,51 @@ const UserService = {
 
 // -------------------------------------------------------------------------------------------------
 
-/* ****************************** get profile ********************************************** */
-viewProfile: async(req,res)=>{
+/* ****************************** get + edit profile ********************************************** */
+/*viewProfile: async(req,res)=>{
+  const tokenProfile = req.cookies.tokenLogin;
 
-  const tokenProfile = req.cookies.tokenLogin; 
-    
+  res.cookie("tokenProfile", tokenProfile );
+       
     User.find({tokenProfile},(err,docs)=>{
         if(err)
         {
-            res.send(err)
-
+          res.send(err)
         }
         else {
             res.send(docs)
         }
     })
 
+},*/
+
+editProfile : async(req,res)=>{
+
+  const tokenProfile = req.cookies.tokenLogin; 
+
+  var decodeTokenLogin = jwt_decode(tokenProfile);
+
+  var idUser = decodeTokenLogin.id;
+
+  console.log(decodeTokenLogin);
+  console.log("***************");
+  console.log("your id : "+idUser);
+
+  User.updateOne(
+    //{ "_id": req.params.id}, // Filter
+    {"_id": idUser},
+    {$set:{"firstName":req.body.firstName,"lastName":req.body.lastName ,"addresse":req.body.addresse,"birthday":req.body.birthday, "genre": req.body.genre}} // Update
+  )
+    .then((obj) => {
+      console.log('Updated - ' + obj);
+      res.send(obj)
+    })
+    .catch((err) => {
+      console.log('Error: ' + err);
+    })
+          
 },
+
 
 
 /* ***************************************************************************************** */

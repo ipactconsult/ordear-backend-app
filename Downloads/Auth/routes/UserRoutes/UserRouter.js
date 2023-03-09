@@ -18,9 +18,11 @@ router.post('/activatewithcode',userController.validationAccountwithcode_control
 
 router.put('/forgotPassWithcode',userController.validationCodeForgotPass_controller);
 router.post('/activatewithcodePassword',userController.validationCodePassword_controller);
+
 router.put('/modifierPass', userController.modifPass_controller)
 
 router.get('/viewProfile', userController.viewProfile_controller)
+router.put('/editProfile/', userController.editProfile_controller)
 
 //Profile Routes
 router.get('/profile/get-user',userController.getUser_controller);

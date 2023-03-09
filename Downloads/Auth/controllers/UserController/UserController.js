@@ -47,6 +47,10 @@ const UserController = {
     userService.viewProfile(req, res);
   },
 
+  editProfile_controller: async (req, res) => {
+    userService.editProfile(req, res);
+  },
+  //--------------------------------------------------------------------------
 
   resetPassword_controller: async (req, res) => {
     userService.resetPassword(req, res);
