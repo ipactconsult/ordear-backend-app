@@ -11,6 +11,9 @@ const UserController = {
     userService.registerwithcode(req, res);
   },
 
+  registerSMS_controller: async (req, res) => {
+    userService.registerwithsmscode(req, res)},
+
   validationAccount_controller: async (req, res) => {
     userService.activationAccount(req, res);
   },

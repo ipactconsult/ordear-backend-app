@@ -11,7 +11,8 @@ const auth=require('../../middleware/auth')
 //passport register with google route file
 
 router.post('/register',userController.register_controller);
-router.post('/login',auth,userController.login_controller);
+router.post('/login',userController.login_controller);
+router.post('/registerwithsms',userController.registerSMS_controller);
 router.post('/registerwithcode',userController.registercode_controller);
 router.post('/activate',userController.validationAccount_controller);
 router.post('/activatewithcode',userController.validationAccountwithcode_controller);
@@ -21,7 +22,7 @@ router.post('/is-validate-token',userController.isValidateToken_controller);
 router.get('/logout',userController.logout_controller);
 
 //Profile Routes
-router.get('/profile/get-user',userController.getUser_controller);
+router.get('/profile/get-user',auth,userController.getUser_controller);
 router.put('/profile/update-user/:id',userController.updateUser_controller);
 router.put('/profile/update-user-image/:id',userController.updateImage_controller);
 //passport re
@@ -40,7 +41,10 @@ router.get(
     scope: ["profile", "email"],
   }));
 
-
+  router.get('/setcookie', (req, res) => {
+    res.cookie(`Cookie token name`,`encrypted cookie string Value`);
+    res.send('Cookie have been saved successfully');
+});
   
 
 router.get("/login/failed", (req, res) => {
@@ -50,7 +54,7 @@ router.get("/login/failed", (req, res) => {
     });
   });
  
-  router.get("/login/success", (req, res) => {
+ /* router.get("/login/success", (req, res) => {
     if (req.user) {
       res.status(200).json({
         success: true,
@@ -62,7 +66,7 @@ router.get("/login/failed", (req, res) => {
       
       );
     }
-  });
+  });*/
   
   
 module.exports = router;
