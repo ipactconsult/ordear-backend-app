@@ -23,62 +23,11 @@ const transporter = nodemailer.createTransport({
 });
 
 const UserService = {
-  register: async (req, res) => {
-    const { firstName,lastName, email, password, passwordVerify,phone="", adresse="", avatar="", birthday="", genre=""} = req.body; //name, country, phone, email, password, passwordVerify
-    User.findOne({ email }).exec((err, user) => {
-      if (user) {
-        return res.status(400).json({ error: "Email is already taken" });
-      }
-    });
-
-    if (password !== passwordVerify) {
-      return res.status(400).json({ error: "Mismatch password" });
-    }
-    const token = jwt.sign(
-      { firstName,lastName, email, password, passwordVerify },
-     `${process.env.JWT_ACC_ACTIVATE}`,
-      { expiresIn: "10m" }
-    );
-
-    const options = {
-      from: 'ettouils505@gmail.com',
-      to: email,
-      subject: "Account Activation Link",
-      html: `
-           <div style="max-width: 700px; margin:auto; border: 5px solid #ddd; padding: 50px 20px; font-size: 110%;">
-           <h2 style="text-align: center; text-transform: uppercase;color: #FF1717;">Welcome to Ordear.</h2>
-           <p>Congratulations! 
-               Just click the button below to validate your email address.
-           </p>
-           
-           
-           <a href="${process.env.CLIENT_URL}/authenticate/activate/${token}"
-              target="_blank"
-              style="background: #FF1717; text-decoration: none; color: white; padding: 10px 20px; margin: 10px 0; display: inline-block;">
-              Verify Your Email Address
-           </a>
-           
-       
-           <p>If the button doesn't work for any reason, you can also copy this link below and paste it in the browser:</p>
-       
-           <a>${process.env.CLIENT_URL}/authenticate/activate/${token}</a>
-           </div>
-           `,
-    };
-
-    transporter.sendMail(options, function (err, info) {
-      if (err) {
-        console.log("Error in signup while account activation: ", err);
-        return res.status(400).json({ error: "Error activating account" });
-      } else {
-        return res.status(200).json({ message: "An email has been sent" });
-      }
-    });
-  },
+  
 
   // ------------ register with code + verification--------------
   registerwithcode: async (req, res) => {
-    const { firstName, lastName, phone ="", adresse="", genre="", birthday="", email, password, passwordVerify } = req.body;
+    const { firstName, lastName, phone ="+1 11111111", adresse="Montreal, Canada", genre="Male", birthday="01/01/2023", email, password, passwordVerify } = req.body;
     User.findOne({ email }).exec((err, user) => {
       if (user) {
         return res.status(400).json({ error: "Email is already taken" });
@@ -107,7 +56,7 @@ const UserService = {
       subject: "Account Activation Code",
       html: `
            <div style="max-width: 700px; margin:auto; border: 5px solid #ddd; padding: 50px 20px; font-size: 110%;">
-           <h2 style="text-align: center; text-transform: uppercase;color: blue;">Welcome to Ordear</h2>
+           <h2 style="text-align: center; text-transform: uppercase;color: #FF1717;">Welcome to Ordear</h2>
            <p>Congratulations! 
                Just click the button below to validate your email address.
            </p>
@@ -192,61 +141,8 @@ const UserService = {
     }
   },
 
-  // --------------------------------------------------
 
-
-  activationAccount: async (req, res) => {
-    const { token } = req.body;
-    if (token) {
-      jwt.verify(
-        token,
-        `${process.env.JWT_ACC_ACTIVATE}`,
-        function (err, decodedToken) {
-          if (err) {
-            console.log(err);
-            return res
-              .status(400)
-              .json({ error: "Incorrect or Expired link." });
-          }
-          const { role, avatar, firstName, lastName, email, password } =
-            decodedToken;
-          User.findOne({ email }).exec(async (err, user) => {
-            if (user) {
-              return res
-                .status(400)
-                .json({ error: "User with this email already exists." });
-            }
-            const salt = await bcrypt.genSalt();
-            const passwordHash = await bcrypt.hash(password, salt);
-            console.log(passwordHash);
-
-            let newUser = new User({
-              role: "user",
-              avatar: "https://image.flaticon.com/icons/png/512/61/61205.png",
-              firstName,   
-              lastName,  
-              email,
-              password: passwordHash,
-            });
-            newUser.save((err, success) => {
-              if (err) {
-                console.log("Error in signup : ", err);
-                return res.status(400).json({ error: err });
-              } else {
-                return res.status(200).json({
-                  message: "Signup success",
-                });
-              }
-            });
-          });
-        }
-      );
-    } else {
-      console.log(err);
-      return res.json({ error: "Something went wrong." });
-    }
-  },
-
+ // ------------------------- Login -----------------------------
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -302,64 +198,6 @@ const UserService = {
     }
   },
 
-  forgotPassword: async (req, res) => {
-    const { email } = req.body;
-    User.findOne({ email }).exec((err, user) => {
-      if (err || !user) {
-       // console.log(err);
-        return res          
-          .status(400)
-          .json({ error: "User with this email does not exists" });
-      }
-
-      const activationCodeForgot = RandomString.generate({
-        length: 4,
-        charset: "numeric",
-      });
-
-      const tokenForgot = jwt.sign(
-        { email, activationCodeForgot },
-        `${process.env.JWT_ACC_ACTIVATE}`,
-       // `${process.env.RESET_PASSWORD_KEY}`,
-        { expiresIn: "10m" }
-      );
-      
-
-      res.cookie("tokenForgot", tokenForgot, { expiresIn: "10m" });  
-
-      const options = {
-        from: "ettouils505@gmail.com",
-        to: email,
-        subject: "Reset password",
-        html: `
-        <div style="max-width: 700px; margin:auto; border: 5px solid #ddd; padding: 50px 20px; font-size: 110%;">
-        <h2 style="text-align: center; text-transform: uppercase;color: blue;">Welcome to Ordear</h2>
-        <p>Congratulations! 
-            Just validate the code below to validate your email address.
-        </p>
-        
-        
-        <a>${activationCodeForgot}</a>
-        </div>
-            `,
-      };
-      return user.updateOne({ resetLink: tokenForgot }, function (err, success) {
-        if (err) {
-          console.log(err);
-          return res.status(400).json({ error: "reset password link error." });
-        } else {
-          //SEND MAIL HERE
-          transporter.sendMail(options, function (err, info) {
-            if (err) {
-              console.log(err);
-              return;
-            }
-            console.log("Sent: " + info.response);
-          });
-        }
-      });
-    });
-  },
 
    /* -------------------------------- Forgot password with EMAIL code --------------------------------*/
 
@@ -391,7 +229,7 @@ const UserService = {
         subject: "Code Reset Password",
         html: `
              <div style="max-width: 700px; margin:auto; border: 5px solid #ddd; padding: 50px 20px; font-size: 110%;">
-             <h2 style="text-align: center; text-transform: uppercase;color: blue;">Welcome to Ordear</h2>
+             <h2 style="text-align: center; text-transform: uppercase;color: #FF1717;">Welcome to Ordear</h2>
              <p>Congratulations! 
                  Just click the button below to validate your email address.
              </p>
@@ -464,7 +302,7 @@ const UserService = {
               subject: "Email confirmation",
               html: `
                    <div style="max-width: 700px; margin:auto; border: 5px solid #ddd; padding: 50px 20px; font-size: 110%;">
-                   <h2 style="text-align: center; text-transform: uppercase;color: blue;">Welcome to Ordear</h2>
+                   <h2 style="text-align: center; text-transform: uppercase;color: #FF1717;">Welcome to Ordear</h2>
                    <p>Congratulations! 
                       Your adress email has been verified.
                    </p>
@@ -520,9 +358,7 @@ const UserService = {
   
   },
 
-// -------------------------------------------------------------------------------------------------
-
-/* ****************************** get + edit profile ********************************************** */
+// ---------------------------- get + edit profile -----------------------------
 viewProfile: async(req,res)=>{
   const tokenViewProfile = req.cookies.tokenLogin;
 
@@ -573,7 +409,14 @@ editProfile : async(req,res)=>{
   User.updateOne(
     //{ "_id": req.params.id}, // Filter
     {"_id": idUser},
-    {$set:{"firstName":req.body.firstName,"lastName":req.body.lastName ,"phone": req.body.phone,"addresse":req.body.addresse,"birthday":req.body.birthday, "genre": req.body.genre}} // Update
+    {$set:{"firstName":req.body.firstName,"lastName":req.body.lastName ,"phone": req.body.phone,"adresse":req.body.adresse,"birthday":req.body.birthday, "genre": req.body.genre}} // Update
+    /*
+    {$set: {"lastName": req.body.lastName}},
+    {$set: {"phone": req.body.phone}},
+    {$set: {"adresse":req.body.addresse}},
+    {$set: {"birthday":req.body.birthday}},
+    {$set: {"genre": req.body.genre}},// 
+    */
   )
     .then((obj) => {
       console.log('Updated - ' + obj);
@@ -585,132 +428,70 @@ editProfile : async(req,res)=>{
           
 },
 
+editPassword: async (req, res) =>{
+  const tokenProfile = req.cookies.tokenLogin; 
 
+  var decodeTokenLogin = jwt_decode(tokenProfile);
+
+  var idUser = decodeTokenLogin.id;
+          
+      var salt = bcrypt.genSaltSync(10);
+      User.updateOne(
+      {"_id": idUser}, // Filter
+      {$set:{"password":  bcrypt.hashSync(req.body.password, salt)},
+
+    } // Update
+    )
+    .then((obj) => {
+      console.log('Updated - ' + obj);
+      res.send(obj)
+    })
+    .catch((err) => {
+      console.log('Error: ' + err);
+    })
+},
+
+// --------------------------- edit Phone number ------------------------------
+editPhone : async (req, res) => {
+
+  const tokenProfile = req.cookies.tokenLogin; 
+
+  var decodeTokenLogin = jwt_decode(tokenProfile);
+
+  var idUser = decodeTokenLogin.id;
+
+  User.updateOne(
+    {"_id": idUser},
+    {$set:{"phone": req.body.phone}} // Update
+  )
+    .then((obj) => {
+      console.log('Updated - ' + obj);
+      res.send(obj)
+    })
+    .catch((err) => {
+      console.log('Error: ' + err);
+    })
+
+},
+
+
+// ---------------------------- Logout ------------------------------------
+logout: async (req, res) => {
+  
+  const tokenProfile = req.cookies.tokenLogin; 
+
+  var decodeTokenLogin = jwt_decode(tokenProfile);
+
+  var idUser = decodeTokenLogin.id;
+  res.cookie("token", "", {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+  res.json({ message: "Logged out" });
+},
 
 /* ***************************************************************************************** */
 
-
-
-updatePWD: async (req, res) =>{
-  var salt = bcrypt.genSaltSync(10);
-  User.updateOne(
-   { "email": req.params.id}, // Filter
-   {$set:{"password":  bcrypt.hashSync(req.body.password, salt)}} // Update
-)
-.then((obj) => {
-   console.log('Updated - ' + obj);
-   res.send(obj)
-})
-.catch((err) => {
-   console.log('Error: ' + err);
-})
-},
-
-  //Profile Management
-
-    //Display User Informations
-  getInformations : async(req,res)=> {
-    const user = await User.findById(req.user);
-    res.json({
-      id: user?._id,
-      avatar : user?.avatar,
-      username: user?.username,
-      //country: user.country,
-      //phone: user?.phone,
-      email: user?.email,
-    })
-  },
-
-
-
-    //Update User Informations
- /* updateInformations : async(req,res)=> {
-    try {
-      let {
-        firstName,
-        lastName,
-        phone,
-        email,
-          //bio,
-          //birthday
-      } = req.body;
-      const userUpdate = await User.findById(req.params.id);
-      if(!firstName){
-        firstName= userUpdate.firstName
-    }
-    if(!lastName){
-      lastName= userUpdate.lastName
-  }
-      if(!email){
-        email= userUpdate.email
-    }
-      
-      if(!phone){
-        phone= userUpdate.phone
-      }
-     /* if(!birthday){
-        birthday= userUpdate.birthday
-      }
-      if(!bio){
-        bio= userUpdate.bio
-      }*/
-    /*  userUpdate.username = username;
-      userUpdate.email = email;
-      userUpdate.country = country;
-      userUpdate.phone = phone;
-      //userUpdate.birthday = birthday;
-      //userUpdate.bio = bio;
-      await userUpdate.save();
-      res.json(
-        
-        {
-          user:{
-            id: userUpdate._id,
-            //avatar : userUpdate.avatar,
-            //role : userUpdate.role,
-            username: userUpdate.username,
-            //country: userUpdate.country,
-            phone: userUpdate.phone,
-            email: userUpdate.email,
-            //bio: userUpdate.bio,
-            //birthday: userUpdate.birthday
-          }     
-        }
-      );
-  
-    } catch (error) {
-      console.log(error);
-    }
-  },
-
-
-    //Update User Profile Image
-  updateImage: async (req, res) => {
-    try {
-      let { avatar } = req.body;
-      const userUpdate = await User.findById(req.params.id);
-      if (!avatar) {
-        avatar = userUpdate.avatar;
-      }
-      userUpdate.avatar = avatar;
-      await userUpdate.save();
-      res.json({
-        user: {
-          id: userUpdate.id,
-          username: userUpdate.username,
-          email: userUpdate.email,
-          phone: userUpdate.phone,
-          country: userUpdate.country,
-          avatar: userUpdate.avatar,
-          birthday: userUpdate.birthday,
-          bio: userUpdate.bio,
-          role: userUpdate.role,
-        },
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  },*/
 };
 
 module.exports = UserService;

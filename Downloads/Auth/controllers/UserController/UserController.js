@@ -2,9 +2,7 @@ const userService = require("../../services/UserServices/UserService");
 
 const UserController = {
 
-  register_controller: async (req, res) => {
-    userService.register(req, res);
-  },
+
 
   /* -------------------register with code  + verification -----------------*/
   registercode_controller: async (req,  res) => {
@@ -14,19 +12,12 @@ const UserController = {
     userService.activationAccountwithcode(req, res);
   },
 
-  /* --------------------------------------------------------- */
-
-  validationAccount_controller: async (req, res) => {
-    userService.activationAccount(req, res);
-  },
+  /* --------------------- Login ------------------------------------ */ 
 
   login_controller: async (req, res) => {
     userService.login(req, res);
   },
 
-  forgotPassword_controller: async (req, res) => {
-    userService.forgotPassword(req, res);
-  },
 
   // ------------ validate code password  + reset Pass -------------------
   validationCodePassword_controller: async (req, res) => {
@@ -40,7 +31,6 @@ const UserController = {
   modifPass_controller: async (req, res) => {
     userService.resetPasswordWithCode(req, res);
   },
-  // ---------------------------------------------------------------------
 
   // ------------------------ profile -------------------------------------
   viewProfile_controller: async (req, res) => {
@@ -50,32 +40,33 @@ const UserController = {
   editProfile_controller: async (req, res) => {
     userService.editProfile(req, res);
   },
+
+  editPassword_Controller: async (req, res) => {
+    userService.editPassword(req, res);
+  },
+
+  editPhone_Controller: async (req, res) => {
+    userService.editPhone(req, res);
+  },
+  
+  logout_Controller : async (req, res) => {
+    userService.logout(req, res);
+  },
   //--------------------------------------------------------------------------
 
   resetPassword_controller: async (req, res) => {
     userService.resetPassword(req, res);
   },
 
-  logout_controller: async (req, res) => {
+  /*logout_controller: async (req, res) => {
     userService.logout(req, res);
   },
-
+*/
   isValidateToken_controller: async (req, res) => {
     userService.validateToken(req, res);
   },
 
-  //Profile
-  getUser_controller : async(req,res)=> {
-    userService.getInformations(req,res);
-  },
-
-  updateUser_controller : async(req,res)=> {
-    userService.updateInformations(req,res);
-  },
-
-  updateImage_controller : async(req,res)=> {
-    userService.updateImage(req,res);
-  }
+ 
 };
 
 module.exports = UserController;

@@ -3,9 +3,7 @@ const express = require("express")
 const mongoose = require('mongoose'); 
 const bodyParser = require('body-parser');
 const cors = require ('cors');
-//const userForgotPass = require("./services/UserForgotPassService");
 const userRoute=require('./routes/UserRoutes/UserRouter');
-//import readFileSync from 'fs';
 const fs = require('fs');
 const cookieParser = require("cookie-parser");
 
@@ -15,17 +13,6 @@ const app = express();
 app.use(cookieParser());
 const MONGO_URL = "mongodb+srv://safaT:123@cluster0.abq6co0.mongodb.net/?retryWrites=true&w=majority"
 
-// ---------------------- Connecter à MongoDB -------------------
-/*const mongoUri = 'mongodb+srv://safa:123@cluster0.jfkalx0.mongodb.net/?retryWrites=true&w=majority';
-mongoose.connect(mongoUri);
-mongoose.connection.on('connected', () => {
- console.log('MongoDB connected');
-});
-mongoose.connection.on('error', () => {
- console.error('Error connecting to mongo', err);
-});*/
-/* -------------------------------------------------------------- */
-
 mongoose.set('strictQuery', true);
 mongoose.connect(MONGO_URL , () => {
   console.log('MongoDB connected');
@@ -33,13 +20,7 @@ mongoose.connect(MONGO_URL , () => {
  mongoose.connection.on('error', () => {
   console.error('Error connecting to mongo', err);
  });
-  /*,{
-  useNewUrlParser : true,
-
-}, (err)=> {
-  if(err) throw err;
-  console.log("MongoDB connection established");
-});*/
+  
 
 app.use(function (req, res, next) {
 
