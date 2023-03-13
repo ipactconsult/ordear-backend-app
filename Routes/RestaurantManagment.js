@@ -2,7 +2,7 @@ const exp=require('express')
 const route=exp.Router()
 const restaurant=require('../Entities/Restaurant')
 const QRCode=require('qrcode')
-const employees=require('../Entities/Employee')
+const employees=require('../Entities/User')
 
 route.post('/add_restaurant',async(req,res)=>{
     let Qrcode=""
