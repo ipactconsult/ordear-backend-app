@@ -6,6 +6,8 @@ const cors = require ('cors');
 const userRoute=require('./routes/UserRoutes/UserRouter');
 const fs = require('fs');
 const cookieParser = require("cookie-parser");
+const passport = require("passport");
+const passportSetup=require('./passport')
 
 const path = require('path')
 require('dotenv').config()

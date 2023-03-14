@@ -141,7 +141,6 @@ const UserService = {
     }
   },
 
-
  // ------------------------- Login -----------------------------
   login: async (req, res) => {
     try {
